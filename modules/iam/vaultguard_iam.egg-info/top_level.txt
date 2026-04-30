@@ -1,0 +1,4 @@
+adapters
+config
+core
+shared

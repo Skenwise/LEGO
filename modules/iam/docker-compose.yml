@@ -1,0 +1,104 @@
+version: '3.8'
+
+services:
+  # PostgreSQL - Profile Schema (less sensitive)
+  profile-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: profile_user
+      POSTGRES_PASSWORD: profile_pass
+      POSTGRES_DB: profile_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - profile-data:/var/lib/postgresql/data
+      - ./migrations/profile_schema:/docker-entrypoint-initdb.d
+    networks:
+      - iam-network
+
+  # PostgreSQL - Auth Schema (ISO 8.27 isolated - DIFFERENT USER!)
+  auth-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: auth_user
+      POSTGRES_PASSWORD: auth_pass
+      POSTGRES_DB: auth_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - auth-data:/var/lib/postgresql/data
+      - ./migrations/auth_schema:/docker-entrypoint-initdb.d
+    networks:
+      - iam-network
+
+  # Redis (Session Store)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - iam-network
+
+  # IAM Module (Development - with hot reload)
+  iam-dev:
+    build:
+      context: .
+      target: builder
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    environment:
+      ENVIRONMENT: dev
+      PROFILE_DATABASE_URL: postgresql://profile_user:profile_pass@profile-db:5432/profile_db
+      AUTH_DATABASE_URL: postgresql://auth_user:auth_pass@auth-db:5432/auth_db
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: dev_secret_32_char_change_in_production!!!
+      JWT_REFRESH_SECRET: dev_refresh_32_char_change_in_production!!!
+      LOG_LEVEL: DEBUG
+      LOG_FORMAT: text
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    depends_on:
+      - profile-db
+      - auth-db
+      - redis
+    networks:
+      - iam-network
+
+  # IAM Module (Production-like - Distroless)
+  iam-prod:
+    build:
+      context: .
+      target: runtime
+    environment:
+      ENVIRONMENT: production
+      PROFILE_DATABASE_URL: postgresql://profile_user:profile_pass@profile-db:5432/profile_db
+      AUTH_DATABASE_URL: postgresql://auth_user:auth_pass@auth-db:5432/auth_db
+      REDIS_URL: redis://redis:6379/0
+      LOG_LEVEL: INFO
+      LOG_FORMAT: json
+    ports:
+      - "8001:8000"
+    secrets:
+      - jwt_secret
+      - jwt_refresh_secret
+    depends_on:
+      - profile-db
+      - auth-db
+      - redis
+    networks:
+      - iam-network
+
+secrets:
+  jwt_secret:
+    file: ./secrets/jwt_secret.txt
+  jwt_refresh_secret:
+    file: ./secrets/jwt_refresh_secret.txt
+
+volumes:
+  profile-data:
+  auth-data:
+
+networks:
+  iam-network:
+    driver: bridge

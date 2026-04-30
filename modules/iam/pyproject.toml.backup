@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vaultguard-iam"
+version = "0.1.0"
+description = "Identity & Access Management Module - Hexagonal Architecture"
+authors = [{name = "VaultGuard Team"}]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi==0.104.1",
+    "uvicorn[standard]==0.24.0",
+    "pydantic==2.7.4",
+    "argon2-cffi==23.1.0",
+    "python-jose[cryptography]==3.3.0",
+    "passlib[argon2]==1.7.4",
+    "asyncpg==0.29.0",
+    "redis==5.0.1",
+    "pyotp==2.9.0",
+    "qrcode==7.4.2",
+    "prometheus-client==0.19.0",
+    "python-multipart==0.0.6",
+    "slowapi==0.1.9",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["core*", "adapters*", "shared*", "config*"]
+exclude = ["tests*", "migrations*", "secrets*", "venv*", "docs*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+markers = [
+    "unit: Unit tests (no external dependencies)",
+    "integration: Integration tests (requires database/redis)",
+    "e2e: End-to-end tests (full stack)",
+]
+addopts = "-v --cov=core --cov-report=term-missing"
+
+[tool.black]
+line-length = 100
+target-version = ['py311']
+
+[tool.ruff]
+line-length = 100
+select = ["E", "F", "W", "I", "N"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = false
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::DeprecationWarning:jose:",
+]
