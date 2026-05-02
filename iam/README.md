@@ -1421,31 +1421,3 @@ Register Request
 │  🔒 If credential save fails → Compensating action: IIdentityRepository.delete()       │
 │     (No orphaned records)                                                              │
 └─────────────────────────────────────────────────────────────────────────────────────────┘
-```
-EOF
-```
-
----
-
-## Step 8: Commit Everything
-
-```bash
-cd /home/skenwise/dbs/Desktop/Project/LEGO
-
-# Add all new documentation
-git add iam/README.md iam/docs/
-
-# Commit
-git commit -m "docs: Add comprehensive professional documentation
-
-- Complete README with architecture deep dive
-- Hexagonal pattern explanation
-- ISO 27001 dual-schema isolation documentation
-- Argon2id configuration and rationale
-- JWT lifecycle with rotation pattern
-- Setup guide for developers
-- API Swagger usage guide
-- Architecture diagram (ASCII)
-
-This documentation tells the full story of the LEGO IAM module:
-why we built it, how it works, and how to use it."
